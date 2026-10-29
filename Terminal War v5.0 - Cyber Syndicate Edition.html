@@ -1,0 +1,1996 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Terminal War v5.0 - Cyber Syndicate Edition</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;600;700&family=Inter:wght@300;400;500;600;700;800&family=Orbitron:wght@400;600;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            bg: '#05070f',
+                            panel: 'rgba(13, 17, 28, 0.78)',
+                            border: 'rgba(255, 255, 255, 0.12)',
+                            accent: 'var(--accent-color, #00f3ff)',
+                            glow: 'var(--accent-glow, rgba(0, 243, 255, 0.4))'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                        tech: ['Rajdhani', 'sans-serif'],
+                        display: ['Orbitron', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --accent-color: #00f3ff;
+            --accent-glow: rgba(0, 243, 255, 0.35);
+            --win-bg: rgba(13, 17, 28, 0.82);
+            --win-border: rgba(255, 255, 255, 0.14);
+            --blur-val: 24px;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--accent-color);
+        }
+
+        /* Win11 Glassmorphism */
+        .win11-glass {
+            background: var(--win-bg);
+            backdrop-filter: blur(var(--blur-val)) saturate(180%);
+            -webkit-backdrop-filter: blur(var(--blur-val)) saturate(180%);
+            border: 1px solid var(--win-border);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+        }
+
+        .win11-taskbar {
+            background: rgba(10, 14, 23, 0.85);
+            backdrop-filter: blur(30px) saturate(200%);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .accent-text { color: var(--accent-color); }
+        .accent-bg { background-color: var(--accent-color); }
+        .accent-border { border-color: var(--accent-color); }
+
+        /* Snap Menu Flyout */
+        .snap-menu { display: none; }
+        .maximize-btn-container:hover .snap-menu { display: flex; }
+
+        /* Matrix Canvas Overlay */
+        #matrix-canvas {
+            pointer-events: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            opacity: 0.12;
+        }
+
+        .no-select {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-black text-gray-100 font-sans h-screen w-screen overflow-hidden no-select select-none">
+
+    <!-- Matrix Stream Ambient Background Canvas -->
+    <canvas id="matrix-canvas"></canvas>
+
+    <!-- ========================================== -->
+    <!-- 1. GLANCE LOCK SCREEN                      -->
+    <!-- ========================================== -->
+    <div id="lock-screen" class="fixed inset-0 z-[9999] flex flex-col justify-between p-12 bg-cover bg-center transition-all duration-700 cursor-pointer" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2000&auto=format&fit=crop');">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        <div class="relative z-10 text-center mt-12">
+            <div id="lock-clock" class="text-8xl font-display font-extrabold text-white tracking-wider drop-shadow-2xl">12:00</div>
+            <div id="lock-date" class="text-2xl font-medium text-cyan-200 mt-2 tracking-wide drop-shadow-lg">Wednesday, October 28</div>
+        </div>
+        <div class="relative z-10 text-center mb-6 animate-bounce text-gray-300 font-medium tracking-widest text-sm uppercase">
+            <i class="fa-solid fa-chevron-up text-xl mb-2 block text-cyan-400"></i>
+            Click anywhere or press any key to open login terminal
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. FORENSIC LOGIN SCREEN (PUZZLE 1)        -->
+    <!-- ========================================== -->
+    <div id="login-screen" class="fixed inset-0 z-[9998] hidden flex flex-col items-center justify-center bg-cover bg-center transition-all duration-500" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2000&auto=format&fit=crop');">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-2xl"></div>
+        
+        <div class="relative z-10 flex flex-col items-center max-w-md w-full p-8 rounded-3xl bg-black/50 border border-white/10 shadow-2xl backdrop-blur-2xl">
+            <div class="w-24 h-24 rounded-full border-2 border-cyan-400/50 p-1 shadow-2xl mb-3 overflow-hidden bg-slate-900">
+                <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop" alt="User Avatar" class="w-full h-full object-cover rounded-full">
+            </div>
+            <h2 class="text-xl font-display font-bold text-white mb-1">CYBER_AGENT_1337</h2>
+            <p class="text-xs font-mono text-cyan-400 mb-4 uppercase tracking-widest">Syndicate Level 5 Operator</p>
+
+            <!-- Forensic Memo Alert Box -->
+            <div class="w-full bg-amber-500/10 border border-amber-500/30 rounded-xl p-3 mb-5 text-[11px] font-mono text-amber-200 text-center space-y-1">
+                <div class="font-bold text-amber-400 uppercase tracking-wider"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Kernel Memory Panic Lockout</div>
+                <p>Security lock engaged following thermal dump. Passcode stored in dump buffer.</p>
+                <p class="text-gray-400 text-[10px]">Access PIN via <strong class="text-cyan-300">WinRE Forensic Shell</strong> or execute <strong class="text-cyan-300">Bypass</strong>.</p>
+            </div>
+
+            <form id="login-form" class="w-full space-y-4" onsubmit="event.preventDefault(); unlockDesktop();">
+                <div class="relative">
+                    <input type="password" id="login-pin" maxlength="6" placeholder="Enter PIN Code..." class="w-full bg-slate-950/80 border border-white/20 rounded-xl px-4 py-3 text-center text-xl tracking-widest text-white focus:outline-none focus:border-cyan-400 transition-all font-mono placeholder:text-gray-600 placeholder:text-xs">
+                    <button type="submit" class="absolute right-2 top-2 bottom-2 px-4 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-400 rounded-lg transition-all">
+                        <i class="fa-solid fa-arrow-right"></i>
+                    </button>
+                </div>
+                <div class="flex justify-between items-center text-xs text-gray-400 pt-1">
+                    <button type="button" onclick="openWinRE('prompt')" class="hover:text-cyan-400 transition-colors flex items-center gap-1.5"><i class="fa-solid fa-terminal text-cyan-400"></i> WinRE Forensic Shell</button>
+                    <button type="button" onclick="openWinRE('bypass')" class="hover:text-purple-400 transition-colors flex items-center gap-1.5"><i class="fa-solid fa-microchip text-purple-400"></i> Security Bypass</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Power Controls -->
+        <div class="absolute bottom-8 right-8 z-10 flex gap-4 text-gray-300 text-lg">
+            <button onclick="playSound('click'); showToast('Network: Encrypted Mesh VPN Active', 'info')" class="w-10 h-10 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"><i class="fa-solid fa-wifi"></i></button>
+            <button onclick="playSound('click'); toggleMute()" id="login-mute-btn" class="w-10 h-10 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-all"><i class="fa-solid fa-volume-high"></i></button>
+            <button onclick="playSound('click'); openWinRE('menu')" class="w-10 h-10 rounded-full bg-black/40 border border-white/10 flex items-center justify-center hover:bg-red-500/20 hover:text-red-400 transition-all"><i class="fa-solid fa-power-off"></i></button>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. MAIN WINDOWS 11 DESKTOP ENVIRONMENT     -->
+    <!-- ========================================== -->
+    <div id="desktop-container" class="relative h-screen w-screen overflow-hidden bg-cover bg-center transition-all duration-700" style="background-image: url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2000&auto=format&fit=crop');">
+
+        <!-- DESKTOP SHORTCUT ICONS GRID (9 APPS) -->
+        <div class="p-6 grid grid-flow-col grid-rows-5 gap-4 w-fit max-h-[calc(100vh-60px)] z-10 relative">
+            
+            <div onclick="openApp('terminal')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-cyan-500/40 flex items-center justify-center text-cyan-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-terminal"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-cyan-300">Terminal CLI</span>
+            </div>
+
+            <div onclick="openApp('vnc')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-emerald-500/40 flex items-center justify-center text-emerald-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-desktop"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-emerald-300">VNC Viewer</span>
+            </div>
+
+            <div onclick="openApp('stocks')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-amber-500/40 flex items-center justify-center text-amber-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-chart-line"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-amber-300">Stock Market</span>
+            </div>
+
+            <div onclick="openApp('casino')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-purple-500/40 flex items-center justify-center text-purple-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-dice"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-purple-300">Cyber Casino</span>
+            </div>
+
+            <div onclick="openApp('netguard')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-red-500/40 flex items-center justify-center text-red-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-red-300">NetGuard</span>
+            </div>
+
+            <div onclick="openApp('market')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-yellow-500/40 flex items-center justify-center text-yellow-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-yellow-300">Black Market</span>
+            </div>
+
+            <div onclick="openApp('files')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-blue-500/40 flex items-center justify-center text-blue-400 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-folder-closed"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-blue-300">File Explorer</span>
+            </div>
+
+            <div onclick="openApp('mail')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-pink-500/40 flex items-center justify-center text-pink-400 text-2xl group-hover:scale-110 shadow-lg transition-transform relative">
+                    <i class="fa-solid fa-envelope"></i>
+                    <span id="mail-badge" class="absolute -top-1 -right-1 bg-pink-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full">3</span>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-pink-300">DarkNet Mail</span>
+            </div>
+
+            <div onclick="openApp('settings')" class="desktop-icon group flex flex-col items-center justify-center w-24 h-24 rounded-2xl hover:bg-white/10 border border-transparent hover:border-white/20 transition-all cursor-pointer">
+                <div class="w-12 h-12 rounded-xl bg-slate-900/80 border border-gray-400/40 flex items-center justify-center text-gray-300 text-2xl group-hover:scale-110 shadow-lg transition-transform">
+                    <i class="fa-solid fa-gear"></i>
+                </div>
+                <span class="text-xs font-medium text-white text-center mt-2 drop-shadow-md group-hover:text-gray-200">Settings</span>
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- DRAGGABLE WINDOWS CONTAINER                -->
+        <!-- ========================================== -->
+        <div id="windows-container" class="absolute inset-0 pb-14 overflow-hidden pointer-events-none">
+
+            <!-- 1. TERMINAL CLI WINDOW -->
+            <div id="win-terminal" class="win11-window pointer-events-auto absolute w-[780px] h-[520px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 50px; left: 100px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold accent-text">
+                        <i class="fa-solid fa-terminal"></i> Terminal CLI v5.0
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('terminal')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <div class="relative maximize-btn-container">
+                            <button onclick="maximizeWindow('terminal')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                            <div class="snap-menu absolute right-0 top-8 bg-slate-900/95 border border-white/20 rounded-xl p-2 shadow-2xl flex gap-2 z-50">
+                                <button onclick="snapWindow('terminal', 'left')" class="w-10 h-8 border border-cyan-500/40 bg-cyan-500/10 hover:bg-cyan-500/30 rounded flex items-center justify-center text-xs"><i class="fa-solid fa-table-columns"></i></button>
+                                <button onclick="snapWindow('terminal', 'right')" class="w-10 h-8 border border-purple-500/40 bg-purple-500/10 hover:bg-purple-500/30 rounded flex items-center justify-center text-xs"><i class="fa-solid fa-table-columns fa-flip-horizontal"></i></button>
+                                <button onclick="snapWindow('terminal', 'full')" class="w-10 h-8 border border-emerald-500/40 bg-emerald-500/10 hover:bg-emerald-500/30 rounded flex items-center justify-center text-xs"><i class="fa-solid fa-expand"></i></button>
+                            </div>
+                        </div>
+                        <button onclick="closeWindow('terminal')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-2 border-b border-white/5 bg-slate-900/40 flex items-center gap-2 overflow-x-auto text-xs font-mono">
+                    <span class="text-gray-400 px-2">Quick Exec:</span>
+                    <button onclick="runTerminalCmd('quick_hack')" class="px-2.5 py-1 bg-cyan-500/20 hover:bg-cyan-500/40 text-cyan-300 rounded border border-cyan-500/30">quick_hack</button>
+                    <button onclick="runTerminalCmd('wardrive')" class="px-2.5 py-1 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 rounded border border-purple-500/30">wardrive</button>
+                    <button onclick="runTerminalCmd('scan')" class="px-2.5 py-1 bg-blue-500/20 hover:bg-blue-500/40 text-blue-300 rounded border border-blue-500/30">scan</button>
+                    <button onclick="runTerminalCmd('crack')" class="px-2.5 py-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-300 rounded border border-amber-500/30">crack</button>
+                    <button onclick="runTerminalCmd('help')" class="px-2.5 py-1 bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-300 rounded border border-emerald-500/30">help</button>
+                </div>
+                <div id="terminal-output" class="flex-1 p-4 font-mono text-xs overflow-y-auto space-y-1.5 text-green-400 bg-black/70">
+                    <div class="text-cyan-400">=== TERMINAL WAR v5.0 [CYBER SYNDICATE ENGINE] ===</div>
+                    <div class="text-gray-400">Type 'help' to list commands. Press TAB for autocomplete, UP/DOWN for history.</div>
+                </div>
+                <div class="p-3 border-t border-white/10 bg-slate-950/80 flex items-center gap-2">
+                    <span class="text-cyan-400 font-mono text-xs font-bold">sys@syndicate:~$&nbsp;</span>
+                    <input type="text" id="terminal-input" autocomplete="off" placeholder="Enter command..." class="flex-1 bg-transparent font-mono text-xs text-white focus:outline-none">
+                </div>
+            </div>
+
+            <!-- 2. VNC REMOTE WORKSTATION WINDOW -->
+            <div id="win-vnc" class="win11-window pointer-events-auto absolute w-[820px] h-[540px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 70px; left: 140px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-emerald-400">
+                        <i class="fa-solid fa-desktop"></i> VNC Remote Desktop Connection
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('vnc')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('vnc')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('vnc')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-3 bg-slate-900/60 border-b border-white/10 flex items-center justify-between text-xs">
+                    <div class="flex items-center gap-2">
+                        <span class="text-gray-400">Breached Node Target:</span>
+                        <select id="vnc-target-select" onchange="switchVNCTarget()" class="bg-slate-950 border border-white/20 rounded px-2 py-1 text-emerald-400 font-mono focus:outline-none">
+                            <option value="bobs_pos">Bobs POS Terminal (Breached)</option>
+                            <option value="citybank">CityBank Gateway Node (Breached)</option>
+                            <option value="apexcorp">ApexCorp Server Blade (Requires Lvl 3 CLI)</option>
+                            <option value="swiss">Swiss Reserve Vault (Requires Lvl 4 CLI)</option>
+                        </select>
+                    </div>
+                    <div id="vnc-status-badge" class="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[10px] font-mono">CONNECTED</div>
+                </div>
+                <div id="vnc-viewport" class="flex-1 bg-slate-950/90 relative p-6 flex flex-col justify-between font-mono text-xs overflow-auto">
+                    <!-- Dynamic VNC View -->
+                </div>
+            </div>
+
+            <!-- 3. STOCK MARKET WINDOW -->
+            <div id="win-stocks" class="win11-window pointer-events-auto absolute w-[800px] h-[530px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 80px; left: 180px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-amber-400">
+                        <i class="fa-solid fa-chart-line"></i> Stock & Crypto Exchange Engine
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('stocks')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('stocks')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('stocks')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex flex-col gap-4 overflow-y-auto">
+                    <div class="grid grid-cols-4 gap-3">
+                        <div onclick="selectStock('NVDA')" id="ticker-NVDA" class="p-3 bg-slate-900/60 border border-amber-500/40 rounded-xl cursor-pointer hover:bg-amber-500/10">
+                            <div class="text-[11px] text-gray-400 font-bold">$NVDA</div>
+                            <div class="text-base font-bold text-amber-400 mt-1" id="price-NVDA">$420.00</div>
+                        </div>
+                        <div onclick="selectStock('CYBR')" id="ticker-CYBR" class="p-3 bg-slate-900/60 border border-white/10 rounded-xl cursor-pointer hover:bg-amber-500/10">
+                            <div class="text-[11px] text-gray-400 font-bold">$CYBR</div>
+                            <div class="text-base font-bold text-cyan-400 mt-1" id="price-CYBR">$180.50</div>
+                        </div>
+                        <div onclick="selectStock('APEX')" id="ticker-APEX" class="p-3 bg-slate-900/60 border border-white/10 rounded-xl cursor-pointer hover:bg-amber-500/10">
+                            <div class="text-[11px] text-gray-400 font-bold">$APEX</div>
+                            <div class="text-base font-bold text-purple-400 mt-1" id="price-APEX">$890.20</div>
+                        </div>
+                        <div onclick="selectStock('BTC')" id="ticker-BTC" class="p-3 bg-slate-900/60 border border-white/10 rounded-xl cursor-pointer hover:bg-amber-500/10">
+                            <div class="text-[11px] text-gray-400 font-bold">$BTC</div>
+                            <div class="text-base font-bold text-yellow-400 mt-1" id="price-BTC">$64,200</div>
+                        </div>
+                    </div>
+                    <div class="relative bg-slate-950/80 border border-white/10 rounded-xl p-3 h-48 flex flex-col justify-between">
+                        <div class="flex justify-between items-center text-xs font-mono text-gray-400">
+                            <span>Selected: <strong id="chart-selected-symbol" class="text-amber-400">NVDA</strong></span>
+                            <span>Live Bezier Feed</span>
+                        </div>
+                        <canvas id="stock-chart" class="w-full h-36"></canvas>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-slate-900/60 border border-white/10 rounded-xl flex flex-col justify-between gap-2">
+                            <div class="text-xs font-semibold text-gray-300">Portfolio & Order Execution</div>
+                            <div class="text-xs text-gray-400">Shares Owned: <span id="trade-owned-shares" class="text-white font-mono">0</span></div>
+                            <div class="flex gap-2">
+                                <input type="number" id="trade-amount-input" min="1" value="1" placeholder="Amount" class="w-24 bg-slate-950 border border-white/20 rounded px-2 py-1 text-xs text-white focus:outline-none">
+                                <button onclick="buyStock()" class="flex-1 bg-emerald-500/20 hover:bg-emerald-500/40 border border-emerald-500/40 text-emerald-300 rounded text-xs font-semibold py-1">Buy</button>
+                                <button onclick="sellStock()" class="flex-1 bg-red-500/20 hover:bg-red-500/40 border border-red-500/40 text-red-300 rounded text-xs font-semibold py-1">Sell All</button>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-slate-900/60 border border-white/10 rounded-xl flex flex-col justify-between gap-2">
+                            <div class="text-xs font-semibold text-amber-400"><i class="fa-solid fa-bolt mr-1"></i> Market Manipulator Exploits</div>
+                            <div class="text-[11px] text-gray-400">Artificially pump or dump selected asset price (+60% / -50%).</div>
+                            <div class="flex gap-2">
+                                <button onclick="pumpStock()" class="flex-1 bg-amber-500/20 hover:bg-amber-500/40 border border-amber-500/40 text-amber-300 rounded text-xs font-semibold py-1"><i class="fa-solid fa-arrow-trend-up mr-1"></i> Pump</button>
+                                <button onclick="dumpStock()" class="flex-1 bg-purple-500/20 hover:bg-purple-500/40 border border-purple-500/40 text-purple-300 rounded text-xs font-semibold py-1"><i class="fa-solid fa-arrow-trend-down mr-1"></i> Dump</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. CYBER CASINO WINDOW (WITH BALANCED HOUSE FEE) -->
+            <div id="win-casino" class="win11-window pointer-events-auto absolute w-[760px] h-[520px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 90px; left: 220px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-purple-400">
+                        <i class="fa-solid fa-dice"></i> Underground Cyber Casino Engine
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('casino')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('casino')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('casino')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-2 border-b border-white/10 bg-slate-900/40 flex justify-between items-center">
+                    <div class="flex gap-2">
+                        <button onclick="switchCasinoTab('crash')" id="tab-casino-crash" class="px-4 py-1.5 rounded-lg bg-purple-500/30 text-purple-300 border border-purple-500/40 text-xs font-semibold">Neon Crash Multiplier</button>
+                        <button onclick="switchCasinoTab('slots')" id="tab-casino-slots" class="px-4 py-1.5 rounded-lg bg-slate-800 text-gray-400 border border-white/10 text-xs font-semibold">Cyber Slots Matrix</button>
+                    </div>
+                    <div class="px-3 py-1 bg-yellow-500/10 border border-yellow-500/30 text-yellow-300 rounded text-[10px] font-mono"><i class="fa-solid fa-scale-balanced mr-1"></i> $2 Syndicate House Fee Per Bet</div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col justify-between overflow-y-auto">
+                    <!-- CRASH TAB -->
+                    <div id="casino-tab-crash-view" class="flex flex-col flex-1 justify-between gap-4">
+                        <div class="relative flex-1 bg-slate-950/90 border border-purple-500/30 rounded-2xl flex flex-col items-center justify-center overflow-hidden p-6">
+                            <div class="text-xs text-purple-400 uppercase tracking-widest font-mono mb-2">Live Crash Multiplier</div>
+                            <div id="crash-multiplier-text" class="text-6xl font-display font-extrabold text-white tracking-wider">1.00x</div>
+                            <div id="crash-payout-text" class="text-sm font-mono text-emerald-400 mt-2">Potential Payout: $0</div>
+                        </div>
+                        <div class="flex items-center gap-4 bg-slate-900/60 p-4 border border-white/10 rounded-xl">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-400 mb-1">Bet Amount ($) + $2 House Fee</label>
+                                <input type="number" id="crash-bet-input" min="1" max="100000" value="50" class="w-full bg-slate-950 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-400 font-mono">
+                            </div>
+                            <button id="crash-action-btn" onclick="handleCrashAction()" class="flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all">START CRASH RUN</button>
+                        </div>
+                    </div>
+
+                    <!-- SLOTS TAB -->
+                    <div id="casino-tab-slots-view" class="hidden flex-1 flex flex-col justify-between gap-4">
+                        <div class="flex-1 bg-slate-950/90 border border-purple-500/30 rounded-2xl flex flex-col items-center justify-center p-6">
+                            <div class="flex gap-4 text-6xl mb-6">
+                                <div id="slot-reel-1" class="w-24 h-28 bg-slate-900 border-2 border-purple-500/40 rounded-xl flex items-center justify-center shadow-inner">🎰</div>
+                                <div id="slot-reel-2" class="w-24 h-28 bg-slate-900 border-2 border-purple-500/40 rounded-xl flex items-center justify-center shadow-inner">🎰</div>
+                                <div id="slot-reel-3" class="w-24 h-28 bg-slate-900 border-2 border-purple-500/40 rounded-xl flex items-center justify-center shadow-inner">🎰</div>
+                            </div>
+                            <div id="slot-result-text" class="text-xs font-mono text-cyan-400 font-semibold">Match 3 to win 10x Jackpot | Match 2 to win 3x</div>
+                        </div>
+                        <div class="flex items-center gap-4 bg-slate-900/60 p-4 border border-white/10 rounded-xl">
+                            <div class="flex-1">
+                                <label class="block text-xs text-gray-400 mb-1">Bet Amount ($) + $2 House Fee</label>
+                                <input type="number" id="slots-bet-input" min="1" max="100000" value="25" class="w-full bg-slate-950 border border-white/20 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-purple-400 font-mono">
+                            </div>
+                            <button id="slots-spin-btn" onclick="spinSlots()" class="flex-1 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all">SPIN REELS</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. NETGUARD SECURITY CENTER -->
+            <div id="win-netguard" class="win11-window pointer-events-auto absolute w-[720px] h-[500px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 100px; left: 260px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-red-400">
+                        <i class="fa-solid fa-shield-halved"></i> NetGuard Threat Defense Engine
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('netguard')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('netguard')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('netguard')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-6 flex-1 flex flex-col justify-between overflow-y-auto gap-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-slate-950/80 border border-white/10 rounded-2xl p-4 flex flex-col items-center justify-center">
+                            <div class="relative w-36 h-36 flex items-center justify-center">
+                                <svg class="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                                    <path class="text-gray-800" stroke-width="3.5" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                    <path id="trace-gauge-circle" class="text-red-500 transition-all duration-500" stroke-dasharray="0, 100" stroke-width="3.5" stroke-linecap="round" stroke="currentColor" fill="none" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                </svg>
+                                <div class="absolute flex flex-col items-center">
+                                    <span id="trace-gauge-val" class="text-2xl font-bold font-mono text-white">0%</span>
+                                    <span class="text-[9px] uppercase font-mono text-gray-400 tracking-wider">Trace Risk</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-slate-900/60 border border-white/10 rounded-2xl p-4 flex flex-col justify-between text-xs space-y-2">
+                            <div class="flex justify-between border-b border-white/10 pb-2">
+                                <span class="text-gray-400">ISP Cyber Trace:</span>
+                                <span id="net-trace-status" class="text-emerald-400 font-mono font-bold">NORMAL (0%)</span>
+                            </div>
+                            <div class="flex justify-between border-b border-white/10 pb-2">
+                                <span class="text-gray-400">Proxy Relay Encryption:</span>
+                                <span class="text-cyan-400 font-mono">256-BIT MESH</span>
+                            </div>
+                            <button onclick="flushTrace()" class="w-full py-2.5 bg-red-600/30 hover:bg-red-600/50 border border-red-500/50 text-red-300 rounded-xl font-semibold transition-all">
+                                <i class="fa-solid fa-fire-flame-curved mr-1"></i> Flush Trace Logs (-30% Trace / $500)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-slate-950/80 border border-white/10 rounded-2xl p-4 flex-1 flex flex-col justify-between">
+                        <div class="text-xs font-semibold text-gray-300 mb-2">Active Proxy Nodes Relay Network</div>
+                        <div class="flex items-center justify-between px-6 py-4 bg-slate-900/40 rounded-xl text-xs font-mono">
+                            <div class="text-center"><i class="fa-solid fa-laptop text-cyan-400 text-lg mb-1 block"></i> Host PC</div>
+                            <i class="fa-solid fa-arrow-right-long text-gray-600"></i>
+                            <div class="text-center"><i class="fa-solid fa-server text-purple-400 text-lg mb-1 block"></i> Relay Node 1</div>
+                            <i class="fa-solid fa-arrow-right-long text-gray-600"></i>
+                            <div class="text-center"><i class="fa-solid fa-vault text-emerald-400 text-lg mb-1 block"></i> Target Bank</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. BLACK MARKET STORE WINDOW -->
+            <div id="win-market" class="win11-window pointer-events-auto absolute w-[780px] h-[520px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 110px; left: 300px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-yellow-400">
+                        <i class="fa-solid fa-cart-shopping"></i> Darknet Black Market Hardware & Exploits
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('market')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('market')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('market')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-6 flex-1 overflow-y-auto space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="text-sm font-bold text-cyan-400">CLI Upgrade: Level 2</h4>
+                                    <span class="px-2 py-0.5 bg-cyan-500/20 text-cyan-300 rounded text-[10px] font-mono">$1,500</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Unlocks <code class="text-cyan-300">bruteforce</code> & CityBank breaches.</p>
+                            </div>
+                            <button id="buy-cli-2" onclick="buyMarketItem('cli_2', 1500)" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-xl text-xs font-bold">Purchase Upgrade</button>
+                        </div>
+                        <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="text-sm font-bold text-purple-400">CLI Upgrade: Level 3</h4>
+                                    <span class="px-2 py-0.5 bg-purple-500/20 text-purple-300 rounded text-[10px] font-mono">$5,000</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Unlocks <code class="text-purple-300">sql_inject</code> & ApexCorp breach.</p>
+                            </div>
+                            <button id="buy-cli-3" onclick="buyMarketItem('cli_3', 5000)" class="w-full py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-xs font-bold">Purchase Upgrade</button>
+                        </div>
+                        <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="text-sm font-bold text-emerald-400">CLI Upgrade: Level 4</h4>
+                                    <span class="px-2 py-0.5 bg-emerald-500/20 text-emerald-300 rounded text-[10px] font-mono">$25,000</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Unlocks <code class="text-emerald-300">quantum_crack</code> & Swiss Vault.</p>
+                            </div>
+                            <button id="buy-cli-4" onclick="buyMarketItem('cli_4', 25000)" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold">Purchase Upgrade</button>
+                        </div>
+                        <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-2">
+                                    <h4 class="text-sm font-bold text-yellow-400">Yagi Antenna Rig</h4>
+                                    <span class="px-2 py-0.5 bg-yellow-500/20 text-yellow-300 rounded text-[10px] font-mono">$3,500</span>
+                                </div>
+                                <p class="text-xs text-gray-400 mb-3">Increases Quick Hack yield payout multiplier by +50% permanently.</p>
+                            </div>
+                            <button id="buy-antenna" onclick="buyMarketItem('antenna', 3500)" class="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-white rounded-xl text-xs font-bold">Purchase Hardware</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. FILE EXPLORER WINDOW -->
+            <div id="win-files" class="win11-window pointer-events-auto absolute w-[750px] h-[480px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 120px; left: 340px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-blue-400">
+                        <i class="fa-solid fa-folder-open"></i> File Explorer & Exfiltrated Data
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('files')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('files')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('files')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="p-4 flex-1 flex gap-4 overflow-hidden">
+                    <div class="w-48 bg-slate-900/60 border border-white/10 rounded-xl p-3 text-xs space-y-2">
+                        <div class="text-gray-400 font-semibold mb-2">Quick Access</div>
+                        <div class="flex items-center gap-2 p-2 bg-blue-500/20 text-blue-300 rounded-lg font-medium cursor-pointer"><i class="fa-solid fa-hard-drive"></i> Exfiltrated Loot</div>
+                    </div>
+                    <div id="file-grid" class="flex-1 bg-slate-950/80 border border-white/10 rounded-xl p-4 grid grid-cols-3 gap-3 overflow-y-auto text-xs">
+                        <!-- Dynamic Exfiltrated Files -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 8. DARKNET MAIL APP (NEW CONTRACT MISSIONS APP) -->
+            <div id="win-mail" class="win11-window pointer-events-auto absolute w-[780px] h-[520px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 85px; left: 240px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-pink-400">
+                        <i class="fa-solid fa-envelope"></i> DarkNet Encrypted Mail & Syndicate Missions
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('mail')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('mail')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('mail')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="flex-1 flex overflow-hidden">
+                    <div id="mail-list" class="w-64 border-r border-white/10 bg-slate-900/40 p-2 overflow-y-auto space-y-1">
+                        <!-- Dynamic Mail Headers -->
+                    </div>
+                    <div id="mail-detail-pane" class="flex-1 p-6 overflow-y-auto flex flex-col justify-between text-xs space-y-4">
+                        <!-- Dynamic Mail Content -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 9. SETTINGS APP WITH CUSTOM WALLPAPER UPLOAD -->
+            <div id="win-settings" class="win11-window pointer-events-auto absolute w-[820px] h-[550px] rounded-2xl win11-glass flex flex-col hidden shadow-2xl transition-all duration-150" style="top: 75px; left: 200px;">
+                <div class="window-header h-10 px-4 flex items-center justify-between border-b border-white/10 bg-slate-950/70 rounded-t-2xl cursor-move">
+                    <div class="flex items-center gap-2 text-xs font-mono font-semibold text-gray-300">
+                        <i class="fa-solid fa-gear"></i> Windows Settings & Personalization
+                    </div>
+                    <div class="flex items-center gap-1">
+                        <button onclick="minimizeWindow('settings')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-solid fa-minus text-xs"></i></button>
+                        <button onclick="maximizeWindow('settings')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"><i class="fa-regular fa-square text-xs"></i></button>
+                        <button onclick="closeWindow('settings')" class="w-8 h-7 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-600 rounded-lg"><i class="fa-solid fa-xmark text-sm"></i></button>
+                    </div>
+                </div>
+                <div class="flex-1 flex overflow-hidden">
+                    <div class="w-56 border-r border-white/10 bg-slate-900/40 p-3 space-y-1 text-xs">
+                        <button onclick="switchSettingsTab('personalize')" id="stab-personalize" class="w-full text-left px-3 py-2 rounded-xl bg-white/10 text-white font-medium flex items-center gap-2"><i class="fa-solid fa-palette text-cyan-400"></i> Personalization</button>
+                        <button onclick="switchSettingsTab('audio')" id="stab-audio" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 text-gray-400 font-medium flex items-center gap-2"><i class="fa-solid fa-volume-high text-purple-400"></i> Sound & Audio</button>
+                        <button onclick="switchSettingsTab('system')" id="stab-system" class="w-full text-left px-3 py-2 rounded-xl hover:bg-white/5 text-gray-400 font-medium flex items-center gap-2"><i class="fa-solid fa-microchip text-emerald-400"></i> System & Security</button>
+                    </div>
+                    <div class="flex-1 p-6 overflow-y-auto space-y-6 text-xs">
+                        
+                        <!-- TAB 1: PERSONALIZATION & CUSTOM UPLOAD -->
+                        <div id="set-view-personalize" class="space-y-6">
+                            
+                            <!-- Custom Local File Upload -->
+                            <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl space-y-3">
+                                <h3 class="text-sm font-bold text-white flex items-center gap-2"><i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i> Upload Custom Desktop Wallpaper</h3>
+                                <p class="text-gray-400 text-[11px]">Upload any custom image file from your PC or enter an image web URL.</p>
+                                
+                                <div class="flex gap-3 items-center">
+                                    <label class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white font-bold rounded-xl cursor-pointer transition-all flex items-center gap-2">
+                                        <i class="fa-solid fa-file-image"></i> Choose File
+                                        <input type="file" id="wallpaper-file-input" accept="image/*" onchange="handleFileUpload(event)" class="hidden">
+                                    </label>
+                                    <span class="text-gray-500">or</span>
+                                    <input type="url" id="wallpaper-url-input" placeholder="Paste image web URL..." class="flex-1 bg-slate-950 border border-white/20 rounded-xl px-3 py-2 text-white focus:outline-none focus:border-cyan-400 font-mono">
+                                    <button onclick="handleURLUpload()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-cyan-300 font-bold rounded-xl border border-cyan-500/30">Apply URL</button>
+                                </div>
+                            </div>
+
+                            <!-- Preset Wallpapers Grid -->
+                            <div>
+                                <h3 class="text-sm font-bold text-white mb-2">Preset High-Res Themes</h3>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div onclick="setWallpaper('castle')" class="group relative rounded-xl overflow-hidden border-2 border-cyan-400 cursor-pointer h-24">
+                                        <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Alpine Castle</div>
+                                    </div>
+                                    <div onclick="setWallpaper('cyberpunk')" class="group relative rounded-xl overflow-hidden border border-white/20 cursor-pointer h-24">
+                                        <img src="https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Cyberpunk City</div>
+                                    </div>
+                                    <div onclick="setWallpaper('bloom')" class="group relative rounded-xl overflow-hidden border border-white/20 cursor-pointer h-24">
+                                        <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Win11 Dark Bloom</div>
+                                    </div>
+                                    <div onclick="setWallpaper('ocean')" class="group relative rounded-xl overflow-hidden border border-white/20 cursor-pointer h-24">
+                                        <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Deep Ocean Trench</div>
+                                    </div>
+                                    <div onclick="setWallpaper('aurora')" class="group relative rounded-xl overflow-hidden border border-white/20 cursor-pointer h-24">
+                                        <img src="https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=600&auto=format&fit=crop" class="w-full h-full object-cover group-hover:scale-110 transition-transform">
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Emerald Aurora</div>
+                                    </div>
+                                    <div onclick="setWallpaper('void')" class="group relative rounded-xl overflow-hidden border border-white/20 cursor-pointer h-24 bg-slate-950">
+                                        <div class="w-full h-full bg-gradient-to-br from-black via-slate-950 to-cyan-950 flex items-center justify-center text-cyan-500 font-mono text-xs">GRID_VOID</div>
+                                        <div class="absolute inset-0 bg-black/30 flex items-end p-2 text-[10px] font-bold text-white">Midnight OLED</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Accent Colors -->
+                            <div>
+                                <h3 class="text-sm font-bold text-white mb-2">System Accent Color</h3>
+                                <div class="flex gap-3">
+                                    <button onclick="setAccentColor('#00f3ff', 'Cyber Cyan')" class="w-9 h-9 rounded-full bg-[#00f3ff] border-2 border-white/40 hover:scale-110 transition-transform shadow-lg"></button>
+                                    <button onclick="setAccentColor('#ff007f', 'Neon Pink')" class="w-9 h-9 rounded-full bg-[#ff007f] border-2 border-white/40 hover:scale-110 transition-transform shadow-lg"></button>
+                                    <button onclick="setAccentColor('#00ff9d', 'Emerald Green')" class="w-9 h-9 rounded-full bg-[#00ff9d] border-2 border-white/40 hover:scale-110 transition-transform shadow-lg"></button>
+                                    <button onclick="setAccentColor('#ffd700', 'Electric Gold')" class="w-9 h-9 rounded-full bg-[#ffd700] border-2 border-white/40 hover:scale-110 transition-transform shadow-lg"></button>
+                                    <button onclick="setAccentColor('#a855f7', 'Royal Violet')" class="w-9 h-9 rounded-full bg-[#a855f7] border-2 border-white/40 hover:scale-110 transition-transform shadow-lg"></button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: AUDIO -->
+                        <div id="set-view-audio" class="hidden space-y-6">
+                            <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="font-bold text-white">Master Audio Volume</span>
+                                    <span id="volume-val-text" class="font-mono text-cyan-400">80%</span>
+                                </div>
+                                <input type="range" id="volume-slider" min="0" max="100" value="80" oninput="setMasterVolume(this.value)" class="w-full accent-cyan-400">
+                                <div class="flex gap-3">
+                                    <button onclick="playSound('click')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-cyan-300 rounded-lg border border-cyan-500/30">Test Click Sound</button>
+                                    <button onclick="playSound('cash')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-emerald-300 rounded-lg border border-emerald-500/30">Test Money Sound</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: SYSTEM -->
+                        <div id="set-view-system" class="hidden space-y-6">
+                            <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl space-y-2">
+                                <h4 class="font-bold text-white">System Diagnostics</h4>
+                                <p class="text-gray-400 text-[11px]">OS: Windows 11 Cyber Syndicate Edition Build 22H2</p>
+                                <p class="text-gray-400 text-[11px]">Anti-Cheat Engine: Active & Enforced</p>
+                            </div>
+                            <div class="p-4 bg-red-500/10 border border-red-500/30 rounded-2xl space-y-3">
+                                <h4 class="font-bold text-red-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i> Hard System Reset</h4>
+                                <p class="text-gray-400 text-[11px]">Completely wipe local game state save and restart system.</p>
+                                <button onclick="resetGameData()" class="px-4 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl">Clear All Save Data</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+            <!-- 10. INTERACTIVE WINRE RECOVERY & FORENSIC SHELL MODAL -->
+            <div id="win-winre" class="win11-window pointer-events-auto absolute inset-4 rounded-2xl bg-blue-950/95 border border-blue-400/40 flex flex-col hidden shadow-2xl z-[9990] backdrop-blur-2xl p-6 font-mono">
+                
+                <div class="flex justify-between items-center border-b border-blue-400/30 pb-3 mb-4">
+                    <div class="text-xl font-bold text-white flex items-center gap-2">
+                        <i class="fa-solid fa-triangle-exclamation text-yellow-400"></i> Windows Recovery Environment (WinRE v5.0)
+                    </div>
+                    <button onclick="closeWinRE()" class="px-3 py-1 bg-blue-600/30 hover:bg-blue-600 text-white rounded text-xs">Exit WinRE</button>
+                </div>
+
+                <!-- WINRE VIEW SWITCHER -->
+                <div id="winre-view-menu" class="flex-1 grid grid-cols-3 gap-6 p-6">
+                    <div onclick="switchWinREView('prompt')" class="p-6 bg-blue-900/40 hover:bg-blue-900/80 border border-blue-400/40 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+                        <i class="fa-solid fa-terminal text-5xl text-cyan-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-base font-bold text-white mb-2">Forensic Shell</h3>
+                        <p class="text-xs text-blue-200">Inspect kernel memory dump buffers to recover passcode salt.</p>
+                    </div>
+
+                    <div onclick="switchWinREView('bypass')" class="p-6 bg-blue-900/40 hover:bg-blue-900/80 border border-blue-400/40 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+                        <i class="fa-solid fa-microchip text-5xl text-purple-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-base font-bold text-white mb-2">Security Bypass</h3>
+                        <p class="text-xs text-blue-200">Execute multi-stage circuit alignment override minigame.</p>
+                    </div>
+
+                    <div onclick="closeWinRE()" class="p-6 bg-blue-900/40 hover:bg-blue-900/80 border border-blue-400/40 rounded-2xl flex flex-col items-center justify-center text-center cursor-pointer transition-all group">
+                        <i class="fa-solid fa-rotate-left text-5xl text-emerald-400 mb-4 group-hover:scale-110 transition-transform"></i>
+                        <h3 class="text-base font-bold text-white mb-2">Return to Login</h3>
+                        <p class="text-xs text-blue-200">Return to Windows password PIN login prompt.</p>
+                    </div>
+                </div>
+
+                <!-- WINRE PROMPT VIEW -->
+                <div id="winre-view-prompt" class="hidden flex-1 flex flex-col justify-between bg-black/90 border border-blue-500/30 rounded-xl p-4 text-xs font-mono text-green-400">
+                    <div id="winre-console" class="flex-1 overflow-y-auto space-y-1.5 mb-3">
+                        <div class="text-cyan-400">=== WINRE FORENSIC KERNEL SHELL v5.0 ===</div>
+                        <div>Type 'help' for recovery commands. Read /sys/recovery.log or use 'memdump'.</div>
+                    </div>
+                    <div class="flex items-center gap-2 border-t border-blue-500/30 pt-2">
+                        <span class="text-cyan-400 font-bold">RECOVERY:\></span>
+                        <input type="text" id="winre-input" onkeydown="if(event.key==='Enter') execWinRECmd()" placeholder="Enter recovery command..." class="flex-1 bg-transparent text-white focus:outline-none">
+                    </div>
+                </div>
+
+                <!-- WINRE BYPASS OVERRIDE MINIGAME VIEW -->
+                <div id="winre-view-bypass" class="hidden flex-1 flex flex-col items-center justify-center bg-black/90 border border-blue-500/30 rounded-xl p-8 space-y-6">
+                    <h3 class="text-lg font-bold text-purple-400 uppercase tracking-widest"><i class="fa-solid fa-microchip mr-2"></i> Circuit Frequency Alignment Override</h3>
+                    <p class="text-xs text-gray-400 text-center max-w-md">Align all 3 node frequencies to 100% resonance to force system kernel unlock.</p>
+                    
+                    <div class="w-full max-w-md space-y-4">
+                        <div>
+                            <div class="flex justify-between text-xs text-cyan-300 mb-1"><span>Node Alpha:</span><span id="node-a-val">30%</span></div>
+                            <input type="range" min="0" max="100" value="30" oninput="checkBypassMinigame()" id="node-a-slider" class="w-full accent-cyan-400">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-purple-300 mb-1"><span>Node Beta:</span><span id="node-b-val">70%</span></div>
+                            <input type="range" min="0" max="100" value="70" oninput="checkBypassMinigame()" id="node-b-slider" class="w-full accent-purple-400">
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-xs text-emerald-300 mb-1"><span>Node Gamma:</span><span id="node-c-val">10%</span></div>
+                            <input type="range" min="0" max="100" value="10" oninput="checkBypassMinigame()" id="node-c-slider" class="w-full accent-emerald-400">
+                        </div>
+                    </div>
+
+                    <button id="bypass-confirm-btn" disabled onclick="completeBypassUnlock()" class="px-8 py-3 bg-gray-800 text-gray-500 rounded-xl font-bold text-sm tracking-wide transition-all cursor-not-allowed">CIRCUIT UNALIGNED</button>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ========================================== -->
+        <!-- START MENU MODAL                           -->
+        <!-- ========================================== -->
+        <div id="start-menu" class="fixed bottom-16 left-1/2 -translate-x-1/2 w-[520px] h-[520px] win11-glass rounded-3xl p-6 hidden flex-col justify-between shadow-2xl z-[9000] border border-white/15">
+            <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-4 top-3 text-gray-400 text-xs"></i>
+                <input type="text" placeholder="Type here to search apps, files, or hacks..." class="w-full bg-slate-900/80 border border-white/10 rounded-2xl pl-10 pr-4 py-2.5 text-xs text-white focus:outline-none focus:border-cyan-400">
+            </div>
+
+            <div>
+                <div class="flex justify-between items-center text-xs font-semibold text-gray-300 mb-3 px-2">
+                    <span>Pinned Applications</span>
+                </div>
+                <div class="grid grid-cols-4 gap-3">
+                    <div onclick="openApp('terminal'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-terminal text-2xl text-cyan-400 mb-1"></i>
+                        <span class="text-[11px] text-white">Terminal CLI</span>
+                    </div>
+                    <div onclick="openApp('vnc'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-desktop text-2xl text-emerald-400 mb-1"></i>
+                        <span class="text-[11px] text-white">VNC Viewer</span>
+                    </div>
+                    <div onclick="openApp('stocks'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-chart-line text-2xl text-amber-400 mb-1"></i>
+                        <span class="text-[11px] text-white">Stock Market</span>
+                    </div>
+                    <div onclick="openApp('casino'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-dice text-2xl text-purple-400 mb-1"></i>
+                        <span class="text-[11px] text-white">Cyber Casino</span>
+                    </div>
+                    <div onclick="openApp('netguard'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-shield-halved text-2xl text-red-400 mb-1"></i>
+                        <span class="text-[11px] text-white">NetGuard</span>
+                    </div>
+                    <div onclick="openApp('market'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-cart-shopping text-2xl text-yellow-400 mb-1"></i>
+                        <span class="text-[11px] text-white">Black Market</span>
+                    </div>
+                    <div onclick="openApp('files'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-folder-closed text-2xl text-blue-400 mb-1"></i>
+                        <span class="text-[11px] text-white">Files</span>
+                    </div>
+                    <div onclick="openApp('mail'); toggleStartMenu();" class="p-3 bg-white/5 hover:bg-white/10 rounded-2xl flex flex-col items-center cursor-pointer transition-all">
+                        <i class="fa-solid fa-envelope text-2xl text-pink-400 mb-1"></i>
+                        <span class="text-[11px] text-white">DarkNet Mail</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-4 border-t border-white/10 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=300&auto=format&fit=crop" class="w-9 h-9 rounded-full object-cover border border-cyan-400/50">
+                    <div>
+                        <div class="text-xs font-bold text-white">CYBER_AGENT_1337</div>
+                        <div class="text-[10px] font-mono text-emerald-400">Wallet: $<span id="start-menu-cash">1,000</span></div>
+                    </div>
+                </div>
+                <button onclick="lockScreen()" class="w-8 h-8 rounded-full hover:bg-white/10 text-gray-400 hover:text-red-400 transition-all flex items-center justify-center">
+                    <i class="fa-solid fa-power-off"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- QUICK SETTINGS FLYOUT                      -->
+        <!-- ========================================== -->
+        <div id="quick-settings-flyout" class="fixed bottom-16 right-4 w-80 bg-slate-950/90 border border-white/15 rounded-3xl p-5 hidden flex-col gap-4 shadow-2xl z-[9000] backdrop-blur-2xl">
+            <div class="grid grid-cols-3 gap-2">
+                <button onclick="playSound('click'); showToast('Wi-Fi Connected', 'info')" class="p-3 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-2xl flex flex-col items-center text-xs font-medium"><i class="fa-solid fa-wifi text-lg mb-1"></i> Wi-Fi</button>
+                <button onclick="playSound('click'); showToast('Bluetooth Mesh Active', 'info')" class="p-3 bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-2xl flex flex-col items-center text-xs font-medium"><i class="fa-brands fa-bluetooth-b text-lg mb-1"></i> Bluetooth</button>
+                <button onclick="toggleMute()" id="qs-mute-btn" class="p-3 bg-slate-800 text-gray-300 border border-white/10 rounded-2xl flex flex-col items-center text-xs font-medium"><i class="fa-solid fa-volume-high text-lg mb-1"></i> Volume</button>
+            </div>
+            <div class="space-y-2">
+                <div class="flex justify-between text-xs text-gray-300">
+                    <span>Volume Level</span>
+                    <span id="qs-volume-text">80%</span>
+                </div>
+                <input type="range" min="0" max="100" value="80" oninput="setMasterVolume(this.value)" class="w-full accent-cyan-400">
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- CALENDAR / TIME FLYOUT                     -->
+        <!-- ========================================== -->
+        <div id="calendar-flyout" class="fixed bottom-16 right-4 w-80 bg-slate-950/90 border border-white/15 rounded-3xl p-5 hidden flex-col gap-3 shadow-2xl z-[9000] backdrop-blur-2xl text-xs font-sans">
+            <div class="flex justify-between items-center text-sm font-bold text-white border-b border-white/10 pb-2">
+                <span id="cal-flyout-date">Wednesday, October 28</span>
+                <i class="fa-regular fa-calendar accent-text"></i>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center font-mono text-gray-400 text-[10px]">
+                <div>Su</div><div>Mo</div><div>Tu</div><div>We</div><div>Th</div><div>Fr</div><div>Sa</div>
+            </div>
+            <div class="grid grid-cols-7 gap-1 text-center font-mono text-gray-200">
+                <div class="p-1 text-gray-600">25</div><div class="p-1 text-gray-600">26</div><div class="p-1 text-gray-600">27</div>
+                <div class="p-1 bg-cyan-500 text-black font-bold rounded-lg shadow">28</div>
+                <div class="p-1">29</div><div class="p-1">30</div><div class="p-1">31</div>
+            </div>
+        </div>
+
+        <!-- ========================================== -->
+        <!-- TASKBAR                                    -->
+        <!-- ========================================== -->
+        <div id="taskbar" class="fixed bottom-0 inset-x-0 h-12 win11-taskbar z-[8000] flex items-center justify-between px-4">
+            
+            <div id="taskbar-inner-container" class="flex items-center gap-1.5 transition-all duration-300 mx-auto">
+                <button onclick="toggleStartMenu()" class="w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all group">
+                    <i class="fa-brands fa-windows text-xl text-cyan-400 group-hover:scale-110 transition-transform"></i>
+                </button>
+
+                <button onclick="openApp('terminal')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-cyan-400 text-lg">
+                    <i class="fa-solid fa-terminal"></i>
+                    <div id="tb-dot-terminal" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full accent-bg"></div>
+                </button>
+
+                <button onclick="openApp('vnc')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-emerald-400 text-lg">
+                    <i class="fa-solid fa-desktop"></i>
+                    <div id="tb-dot-vnc" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400"></div>
+                </button>
+
+                <button onclick="openApp('stocks')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-amber-400 text-lg">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <div id="tb-dot-stocks" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-amber-400"></div>
+                </button>
+
+                <button onclick="openApp('casino')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-purple-400 text-lg">
+                    <i class="fa-solid fa-dice"></i>
+                    <div id="tb-dot-casino" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-purple-400"></div>
+                </button>
+
+                <button onclick="openApp('netguard')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-red-400 text-lg">
+                    <i class="fa-solid fa-shield-halved"></i>
+                    <div id="tb-dot-netguard" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-red-400"></div>
+                </button>
+
+                <button onclick="openApp('market')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-yellow-400 text-lg">
+                    <i class="fa-solid fa-cart-shopping"></i>
+                    <div id="tb-dot-market" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-yellow-400"></div>
+                </button>
+
+                <button onclick="openApp('files')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-blue-400 text-lg">
+                    <i class="fa-solid fa-folder-closed"></i>
+                    <div id="tb-dot-files" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-blue-400"></div>
+                </button>
+
+                <button onclick="openApp('mail')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-pink-400 text-lg">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div id="tb-dot-mail" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-pink-400"></div>
+                </button>
+
+                <button onclick="openApp('settings')" class="taskbar-app-icon relative w-10 h-10 rounded-xl hover:bg-white/10 flex items-center justify-center transition-all text-gray-300 text-lg">
+                    <i class="fa-solid fa-gear"></i>
+                    <div id="tb-dot-settings" class="hidden absolute bottom-0.5 w-1.5 h-1.5 rounded-full bg-gray-300"></div>
+                </button>
+
+            </div>
+
+            <div class="flex items-center gap-2 text-xs">
+                <div class="px-3 py-1 rounded-xl bg-slate-900/80 border border-white/10 font-mono text-emerald-400 font-bold flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-wallet text-xs"></i> $<span id="tb-cash-display">1,000</span>
+                </div>
+
+                <button onclick="toggleQuickSettings()" class="px-2.5 py-1 rounded-xl hover:bg-white/10 flex items-center gap-2 text-gray-300 transition-all">
+                    <i class="fa-solid fa-wifi text-xs"></i>
+                    <i class="fa-solid fa-volume-high text-xs"></i>
+                    <i class="fa-solid fa-battery-three-quarters text-xs text-green-400"></i>
+                </button>
+
+                <button onclick="toggleCalendar()" class="px-3 py-1 rounded-xl hover:bg-white/10 text-right text-gray-200 transition-all">
+                    <div id="tb-clock" class="font-mono font-bold leading-tight">12:00 PM</div>
+                    <div id="tb-date" class="text-[10px] text-gray-400 leading-tight">10/28/2026</div>
+                </button>
+            </div>
+
+        </div>
+
+        <div id="toast-container" class="fixed top-6 right-6 z-[9995] space-y-3 pointer-events-none w-80"></div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT ENGINE & LOGIC                  -->
+    <!-- ========================================== -->
+    <script>
+        /* ------------------------------------------------------------------ */
+        /* 1. AUDIO SYNTHESIZER ENGINE                                        */
+        /* ------------------------------------------------------------------ */
+        class WebAudioSynth {
+            constructor() {
+                this.ctx = null;
+                this.masterVolume = 0.8;
+                this.isMuted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            play(type) {
+                if (this.isMuted) return;
+                this.init();
+                if (!this.ctx) return;
+
+                const now = this.ctx.currentTime;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+
+                gain.gain.setValueAtTime(this.masterVolume, now);
+
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.05);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+                    osc.start(now);
+                    osc.stop(now + 0.05);
+                } else if (type === 'cash') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(987.77, now);
+                    osc.frequency.setValueAtTime(1318.51, now + 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'hack_success') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(523.25, now);
+                    osc.frequency.setValueAtTime(659.25, now + 0.08);
+                    osc.frequency.setValueAtTime(783.99, now + 0.16);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.35);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'alarm') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.linearRampToValueAtTime(800, now + 0.2);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                } else if (type === 'spin') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.04);
+                    osc.start(now);
+                    osc.stop(now + 0.04);
+                }
+            }
+        }
+
+        const audioSynth = new WebAudioSynth();
+        function playSound(type) { try { audioSynth.play(type); } catch(e){} }
+
+        function setMasterVolume(val) {
+            const num = Math.min(100, Math.max(0, parseInt(val) || 0));
+            audioSynth.masterVolume = num / 100;
+            document.getElementById('volume-val-text').innerText = `${num}%`;
+            document.getElementById('qs-volume-text').innerText = `${num}%`;
+        }
+
+        function toggleMute() {
+            audioSynth.isMuted = !audioSynth.isMuted;
+            showToast(audioSynth.isMuted ? "Audio Muted" : "Audio Enabled", "info");
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 2. GAME STATE & DYNAMIC SESSION DATES & PUZZLE PIN                 */
+        /* ------------------------------------------------------------------ */
+        const randomDynamicPIN = Math.floor(1000 + Math.random() * 9000).toString(); // e.g. "4829"
+
+        const DEFAULT_STATE = {
+            systemSessionPIN: randomDynamicPIN,
+            cash: 1000,
+            trace: 0,
+            cliLevel: 1,
+            hasAntenna: false,
+            vncNodes: {
+                bobs_pos: { name: 'Bobs POS Terminal', breached: true, drained: false, pin: '4921', cashPool: 850 },
+                citybank: { name: 'CityBank Gateway Node', breached: false, drained: false, pin: '8832', cashPool: 4500 },
+                apexcorp: { name: 'ApexCorp Server Blade', breached: false, drained: false, pin: '1337', cashPool: 15000 },
+                swiss: { name: 'Swiss Reserve Vault', breached: false, drained: false, pin: '9001', cashPool: 50000 }
+            },
+            portfolio: { NVDA: 0, CYBR: 0, APEX: 0, BTC: 0 },
+            exfiltratedFiles: [
+                { name: 'bobs_pos_passwords.txt', content: 'POS_ADMIN_PIN: 4921\nCityBank Acct: #8832-901' }
+            ],
+            darknetMails: [
+                {
+                    id: 'm1',
+                    sender: 'Vektor (Syndicate Command)',
+                    subject: 'Operation Welcome: Infiltrate Bob\'s POS',
+                    body: 'Agent 1337, welcome back online. Your first target is Bob\'s local POS Terminal. Connect via VNC, find the security PIN in text files, and execute the direct wire transfer.',
+                    reward: 500,
+                    reqNode: 'bobs_pos',
+                    claimed: false
+                },
+                {
+                    id: 'm2',
+                    sender: 'Ghost_Actual',
+                    subject: 'CityBank Gateway Infiltration Contract',
+                    body: 'CityBank Gateway is ripe for an exploit. Purchase CLI Upgrade Level 2 from the Black Market, execute "bruteforce" in Terminal, and drain the $4,500 bank pool.',
+                    reward: 2000,
+                    reqNode: 'citybank',
+                    claimed: false
+                },
+                {
+                    id: 'm3',
+                    sender: 'Nyx (Zero-Day Broker)',
+                    subject: 'Swiss Vault High Value Exfiltration',
+                    body: 'The Swiss Reserve Vault holds $50,000 in unbacked liquidity. Reach CLI Level 4 to execute "quantum_crack" and claim your bounty.',
+                    reward: 10000,
+                    reqNode: 'swiss',
+                    claimed: false
+                }
+            ]
+        };
+
+        let player = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
+        function loadSavedState() {
+            try {
+                const saved = localStorage.getItem('terminal_war_v5_save');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (typeof parsed.cash === 'number' && !isNaN(parsed.cash)) {
+                        player = Object.assign({}, DEFAULT_STATE, parsed);
+                    }
+                }
+            } catch (e) {
+                player = JSON.parse(JSON.stringify(DEFAULT_STATE));
+            }
+            updateUI();
+        }
+
+        function saveGameState() {
+            try {
+                localStorage.setItem('terminal_war_v5_save', JSON.stringify(player));
+            } catch(e){}
+        }
+
+        function updateUI() {
+            player.cash = Math.max(0, Math.floor(Number(player.cash) || 0));
+            player.trace = Math.min(100, Math.max(0, Math.floor(Number(player.trace) || 0)));
+
+            document.getElementById('tb-cash-display').innerText = player.cash.toLocaleString();
+            document.getElementById('start-menu-cash').innerText = player.cash.toLocaleString();
+            
+            const circle = document.getElementById('trace-gauge-circle');
+            if (circle) circle.setAttribute('stroke-dasharray', `${player.trace}, 100`);
+            document.getElementById('trace-gauge-val').innerText = `${player.trace}%`;
+            document.getElementById('net-trace-status').innerText = player.trace > 75 ? `CRITICAL (${player.trace}%)` : `NORMAL (${player.trace}%)`;
+
+            // Upgrade Market Buttons State
+            const b2 = document.getElementById('buy-cli-2');
+            if (b2 && player.cliLevel >= 2) { b2.disabled = true; b2.innerText = "OWNED"; b2.className = "w-full py-2 bg-gray-700 text-gray-400 rounded-xl text-xs font-bold cursor-not-allowed"; }
+            const b3 = document.getElementById('buy-cli-3');
+            if (b3 && player.cliLevel >= 3) { b3.disabled = true; b3.innerText = "OWNED"; b3.className = "w-full py-2 bg-gray-700 text-gray-400 rounded-xl text-xs font-bold cursor-not-allowed"; }
+            const b4 = document.getElementById('buy-cli-4');
+            if (b4 && player.cliLevel >= 4) { b4.disabled = true; b4.innerText = "OWNED"; b4.className = "w-full py-2 bg-gray-700 text-gray-400 rounded-xl text-xs font-bold cursor-not-allowed"; }
+
+            if (player.trace >= 100) {
+                openWinRE('prompt');
+            }
+
+            renderMailApp();
+            saveGameState();
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 3. WINDOW MANAGEMENT & SNAP LAYOUTS                               */
+        /* ------------------------------------------------------------------ */
+        let zIndexCounter = 100;
+        const openWindows = new Set();
+
+        function openApp(appId) {
+            playSound('click');
+            const win = document.getElementById(`win-${appId}`);
+            const dot = document.getElementById(`tb-dot-${appId}`);
+            if (!win) return;
+
+            win.classList.remove('hidden');
+            openWindows.add(appId);
+            if (dot) dot.classList.remove('hidden');
+
+            zIndexCounter++;
+            win.style.zIndex = zIndexCounter;
+
+            if (appId === 'vnc') renderVNCViewport();
+            if (appId === 'files') renderFilesGrid();
+            if (appId === 'mail') renderMailApp();
+        }
+
+        function closeWindow(appId) {
+            playSound('click');
+            const win = document.getElementById(`win-${appId}`);
+            const dot = document.getElementById(`tb-dot-${appId}`);
+            if (win) win.classList.add('hidden');
+            if (dot) dot.classList.add('hidden');
+            openWindows.delete(appId);
+        }
+
+        function minimizeWindow(appId) {
+            playSound('click');
+            const win = document.getElementById(`win-${appId}`);
+            if (win) win.classList.add('hidden');
+        }
+
+        function maximizeWindow(appId) {
+            playSound('click');
+            const win = document.getElementById(`win-${appId}`);
+            if (!win) return;
+            if (win.dataset.maximized === 'true') {
+                win.style.top = '60px';
+                win.style.left = '120px';
+                win.style.width = '780px';
+                win.style.height = '520px';
+                win.dataset.maximized = 'false';
+            } else {
+                win.style.top = '0px';
+                win.style.left = '0px';
+                win.style.width = '100vw';
+                win.style.height = 'calc(100vh - 48px)';
+                win.dataset.maximized = 'true';
+            }
+        }
+
+        function snapWindow(appId, position) {
+            playSound('click');
+            const win = document.getElementById(`win-${appId}`);
+            if (!win) return;
+
+            if (position === 'left') {
+                win.style.top = '0px';
+                win.style.left = '0px';
+                win.style.width = '50vw';
+                win.style.height = 'calc(100vh - 48px)';
+            } else if (position === 'right') {
+                win.style.top = '0px';
+                win.style.left = '50vw';
+                win.style.width = '50vw';
+                win.style.height = 'calc(100vh - 48px)';
+            } else {
+                maximizeWindow(appId);
+            }
+        }
+
+        // Window Dragging Listener
+        document.addEventListener('mousedown', (e) => {
+            const header = e.target.closest('.window-header');
+            if (!header) return;
+            const win = header.closest('.win11-window');
+            if (!win) return;
+
+            zIndexCounter++;
+            win.style.zIndex = zIndexCounter;
+
+            let startX = e.clientX - win.offsetLeft;
+            let startY = e.clientY - win.offsetTop;
+
+            function onMouseMove(e) {
+                let newLeft = e.clientX - startX;
+                let newTop = e.clientY - startY;
+
+                newLeft = Math.max(0, Math.min(window.innerWidth - win.offsetWidth, newLeft));
+                newTop = Math.max(0, Math.min(window.innerHeight - win.offsetHeight - 48, newTop));
+
+                win.style.left = `${newLeft}px`;
+                win.style.top = `${newTop}px`;
+            }
+
+            function onMouseUp() {
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            }
+
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        /* ------------------------------------------------------------------ */
+        /* 4. FORENSIC LOGIN PUZZLE & WINRE SHELL                             */
+        /* ------------------------------------------------------------------ */
+        function unlockDesktop() {
+            const entered = document.getElementById('login-pin').value.trim();
+            if (entered === player.systemSessionPIN) {
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('lock-screen').classList.add('hidden');
+                playSound('hack_success');
+                showToast("LOGIN AUTHORIZED: Cyber Syndicate Shell Active", "success");
+            } else {
+                playSound('alarm');
+                showToast("ACCESS DENIED: PIN Invalid! Check WinRE Forensic Shell", "error");
+            }
+        }
+
+        function openWinRE(initialView = 'menu') {
+            playSound('click');
+            document.getElementById('win-winre').classList.remove('hidden');
+            switchWinREView(initialView);
+        }
+
+        function closeWinRE() {
+            playSound('click');
+            document.getElementById('win-winre').classList.add('hidden');
+        }
+
+        function switchWinREView(view) {
+            document.getElementById('winre-view-menu').classList.toggle('hidden', view !== 'menu');
+            document.getElementById('winre-view-prompt').classList.toggle('hidden', view !== 'prompt');
+            document.getElementById('winre-view-bypass').classList.toggle('hidden', view !== 'bypass');
+        }
+
+        function execWinRECmd() {
+            const input = document.getElementById('winre-input');
+            const raw = input.value.trim();
+            const cmd = raw.toLowerCase();
+            const consoleBox = document.getElementById('winre-console');
+
+            const printLine = (txt, color = 'text-green-400') => {
+                const div = document.createElement('div');
+                div.className = color;
+                div.innerText = txt;
+                consoleBox.appendChild(div);
+                consoleBox.scrollTop = consoleBox.scrollHeight;
+            };
+
+            printLine(`RECOVERY:\\> ${raw}`, 'text-cyan-300 font-bold');
+
+            if (cmd === 'help') {
+                printLine("WINRE FORENSIC COMMANDS:");
+                printLine("- dir / ls           : List recovery partition files");
+                printLine("- cat /sys/recovery.log : Inspect kernel panic dump log");
+                printLine("- memdump            : Dump RAM hex buffer at 0x04");
+                printLine("- decrypt_token      : Decode hashed session PIN token");
+                printLine("- clear              : Clear console screen");
+            } else if (cmd === 'dir' || cmd === 'ls') {
+                printLine("Directory of RECOVERY:\\sys\\");
+                printLine("10/28/2026  03:14 PM  <FILE>  recovery.log");
+                printLine("10/28/2026  03:15 PM  <FILE>  kernel_panic.dmp");
+                printLine("10/28/2026  03:15 PM  <FILE>  auth_token.hash");
+            } else if (cmd.includes('recovery.log')) {
+                printLine("[KERNEL PANIC DUMP] FATAL_EXCEPTION at Address 0x04", 'text-yellow-400');
+                printLine(`CRASH_BUFFER_0x04: [TOKEN_SALT_HASH: 0x${player.systemSessionPIN}_SYSKEY]`);
+                printLine("Type 'decrypt_token 0x" + player.systemSessionPIN + "' to extract PIN.");
+            } else if (cmd === 'memdump') {
+                printLine("0x00: 00 FF 12 A4  43 59 42 45  [CYBE]");
+                printLine(`0x04: 50 49 4E 3A  ${player.systemSessionPIN.substring(0,2)} ${player.systemSessionPIN.substring(2,4)} 00 00  [PIN:${player.systemSessionPIN}]`, 'text-emerald-300 font-bold');
+                printLine("0x08: 90 90 90 90  FF 00 FF 00  [NOPs]");
+            } else if (cmd.startsWith('decrypt_token')) {
+                printLine(`[DECRYPT SUCCESS] Unhashed Session PIN: ${player.systemSessionPIN}`, 'text-cyan-300 font-bold');
+            } else if (cmd === 'clear') {
+                consoleBox.innerHTML = '';
+            } else {
+                printLine(`Command non-recognized. Type 'help' for utilities.`, 'text-red-400');
+            }
+
+            input.value = '';
+        }
+
+        // Bypass Minigame Verification
+        function checkBypassMinigame() {
+            const a = parseInt(document.getElementById('node-a-slider').value);
+            const b = parseInt(document.getElementById('node-b-slider').value);
+            const c = parseInt(document.getElementById('node-c-slider').value);
+
+            document.getElementById('node-a-val').innerText = `${a}%`;
+            document.getElementById('node-b-val').innerText = `${b}%`;
+            document.getElementById('node-c-val').innerText = `${c}%`;
+
+            const btn = document.getElementById('bypass-confirm-btn');
+            if (a === 100 && b === 100 && c === 100) {
+                btn.disabled = false;
+                btn.innerText = "FORCE OVERRIDE SYSTEM UNLOCK";
+                btn.className = "px-8 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all cursor-pointer";
+            } else {
+                btn.disabled = true;
+                btn.innerText = "CIRCUIT UNALIGNED";
+                btn.className = "px-8 py-3 bg-gray-800 text-gray-500 rounded-xl font-bold text-sm tracking-wide transition-all cursor-not-allowed";
+            }
+        }
+
+        function completeBypassUnlock() {
+            closeWinRE();
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('lock-screen').classList.add('hidden');
+            playSound('hack_success');
+            showToast("SECURITY BYPASS EXPLOIT SUCCESSFUL!", "success");
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 5. TERMINAL CLI ENGINE                                            */
+        /* ------------------------------------------------------------------ */
+        const commandHistory = [];
+        let historyIndex = -1;
+
+        const terminalInput = document.getElementById('terminal-input');
+        if (terminalInput) {
+            terminalInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    const cmd = terminalInput.value.trim();
+                    if (cmd) {
+                        commandHistory.push(cmd);
+                        historyIndex = commandHistory.length;
+                        execTerminalCmd(cmd);
+                    }
+                    terminalInput.value = '';
+                } else if (e.key === 'ArrowUp') {
+                    if (historyIndex > 0) { historyIndex--; terminalInput.value = commandHistory[historyIndex]; }
+                } else if (e.key === 'ArrowDown') {
+                    if (historyIndex < commandHistory.length - 1) { historyIndex++; terminalInput.value = commandHistory[historyIndex]; }
+                    else { historyIndex = commandHistory.length; terminalInput.value = ''; }
+                }
+            });
+        }
+
+        function runTerminalCmd(cmd) { playSound('click'); execTerminalCmd(cmd); }
+
+        function printTerminal(msg, colorClass = 'text-green-400') {
+            const output = document.getElementById('terminal-output');
+            if (!output) return;
+            const line = document.createElement('div');
+            line.className = colorClass;
+            line.innerText = msg;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function execTerminalCmd(rawCmd) {
+            const parts = rawCmd.split(' ');
+            const cmd = parts[0].toLowerCase();
+
+            printTerminal(`sys@syndicate:~$ ${rawCmd}`, 'text-cyan-300 font-bold');
+
+            if (cmd === 'help') {
+                printTerminal("AVAILABLE CLI COMMANDS:");
+                printTerminal("- quick_hack : Rapid unencrypted breach (+$100-$300, +5% trace)");
+                printTerminal("- wardrive   : Scan nearby Wi-Fi targets");
+                printTerminal("- scan       : Perform full port scan");
+                printTerminal("- clear      : Clear console");
+                if (player.cliLevel >= 2) printTerminal("- bruteforce : Breach CityBank Gateway Node");
+                if (player.cliLevel >= 3) printTerminal("- sql_inject : Inject ApexCorp Server Blade");
+                if (player.cliLevel >= 4) printTerminal("- quantum_crack : Decrypt Swiss Reserve Vault");
+            } else if (cmd === 'clear') {
+                document.getElementById('terminal-output').innerHTML = '';
+            } else if (cmd === 'quick_hack') {
+                let reward = Math.floor(Math.random() * 200) + 100;
+                if (player.hasAntenna) reward = Math.floor(reward * 1.5);
+                player.cash += reward;
+                player.trace += 5;
+                playSound('hack_success');
+                printTerminal(`[SUCCESS] Fast payload delivered! +$${reward}. Trace +5%`, 'text-emerald-400');
+                updateUI();
+            } else if (cmd === 'wardrive') {
+                printTerminal("[SCANNING] Found WEP / WPA2 Networks nearby: Bobs_POS, CityBank_Gate, Apex_Corp", 'text-yellow-400');
+            } else if (cmd === 'bruteforce') {
+                if (player.cliLevel < 2) return printTerminal("[ERROR] Requires CLI Level 2!", "text-red-400");
+                player.vncNodes.citybank.breached = true;
+                playSound('hack_success');
+                printTerminal("[SUCCESS] CityBank Gateway Breached!", "text-emerald-400");
+            } else if (cmd === 'sql_inject') {
+                if (player.cliLevel < 3) return printTerminal("[ERROR] Requires CLI Level 3!", "text-red-400");
+                player.vncNodes.apexcorp.breached = true;
+                playSound('hack_success');
+                printTerminal("[SUCCESS] ApexCorp Server Breached!", "text-emerald-400");
+            } else if (cmd === 'quantum_crack') {
+                if (player.cliLevel < 4) return printTerminal("[ERROR] Requires CLI Level 4!", "text-red-400");
+                player.vncNodes.swiss.breached = true;
+                playSound('hack_success');
+                printTerminal("[SUCCESS] Swiss Reserve Vault Decrypted!", "text-emerald-400");
+            } else {
+                printTerminal(`[ERROR] Unknown command: '${cmd}'`, 'text-red-400');
+            }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 6. VNC REMOTE WORKSTATION ENGINE                                  */
+        /* ------------------------------------------------------------------ */
+        let currentVNCTargetKey = 'bobs_pos';
+
+        function switchVNCTarget() {
+            currentVNCTargetKey = document.getElementById('vnc-target-select').value;
+            renderVNCViewport();
+        }
+
+        function renderVNCViewport() {
+            const vp = document.getElementById('vnc-viewport');
+            const target = player.vncNodes[currentVNCTargetKey];
+
+            if (!target || !target.breached) {
+                vp.innerHTML = `
+                    <div class="flex-1 flex flex-col items-center justify-center text-center p-8 space-y-4">
+                        <i class="fa-solid fa-lock text-6xl text-red-500 animate-pulse"></i>
+                        <h3 class="text-xl font-bold text-red-400">ACCESS DENIED: NODE ENCRYPTED</h3>
+                        <p class="text-gray-400 max-w-md">Execute breach via Terminal CLI before launching VNC session.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            vp.innerHTML = `
+                <div class="bg-slate-900 border border-white/20 rounded-xl p-4 space-y-4 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-white/10 pb-2">
+                        <div class="font-bold text-white"><i class="fa-solid fa-server mr-2 text-emerald-400"></i> ${target.name}</div>
+                        <span class="text-[10px] text-emerald-400 font-mono">STATUS: ONLINE</span>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-3 bg-slate-950 rounded-lg border border-white/10">
+                            <div class="font-semibold text-gray-300 mb-2"><i class="fa-solid fa-file-code text-cyan-400 mr-1"></i> Remote Text Credentials</div>
+                            <div class="bg-black/80 p-2 rounded text-[11px] font-mono text-amber-300 space-y-1">
+                                <div>ACCOUNT: #${target.pin}-801</div>
+                                <div>SECURITY PIN: <strong class="text-white">${target.pin}</strong></div>
+                            </div>
+                            <button onclick="exfiltrateFile('${target.name}_credentials.txt', 'ACCOUNT: #${target.pin}-801\\nPIN: ${target.pin}')" class="mt-3 w-full py-1.5 bg-cyan-600/30 hover:bg-cyan-600/50 text-cyan-300 rounded text-xs font-semibold border border-cyan-500/40">Exfiltrate Record to Files</button>
+                        </div>
+
+                        <div class="p-3 bg-slate-950 rounded-lg border border-white/10 flex flex-col justify-between">
+                            <div>
+                                <div class="font-semibold text-gray-300 mb-1"><i class="fa-solid fa-vault text-emerald-400 mr-1"></i> BankPortal.exe</div>
+                                <div class="text-[11px] text-gray-400">Available Wire Pool: <strong class="text-emerald-400">$${target.cashPool.toLocaleString()}</strong></div>
+                            </div>
+                            
+                            ${target.drained ? 
+                                `<div class="p-2 bg-red-500/20 text-red-400 text-center rounded font-bold text-xs mt-2">ACCOUNT ALREADY DRAINED</div>` :
+                                `<button onclick="executeBankWire('${currentVNCTargetKey}')" class="w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg text-xs shadow-lg transition-all mt-2"><i class="fa-solid fa-money-bill-transfer mr-1"></i> Wire Direct to Player Wallet</button>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function executeBankWire(targetKey) {
+            const target = player.vncNodes[targetKey];
+            if (!target || target.drained) return showToast("Account already drained!", "error");
+
+            player.cash += target.cashPool;
+            target.drained = true;
+            player.trace += 15;
+            playSound('cash');
+            showToast(`WIRE SUCCESS: Transferred $${target.cashPool.toLocaleString()}!`, "success");
+            
+            updateUI();
+            renderVNCViewport();
+        }
+
+        function exfiltrateFile(fileName, content) {
+            if (player.exfiltratedFiles.some(f => f.name === fileName)) return showToast("File already exfiltrated!", "warning");
+            player.exfiltratedFiles.push({ name: fileName, content: content });
+            playSound('hack_success');
+            showToast(`File exfiltrated: ${fileName}`, "info");
+            renderFilesGrid();
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 7. DARKNET MAIL APP (MISSIONS & LORE)                              */
+        /* ------------------------------------------------------------------ */
+        let activeMailId = 'm1';
+
+        function renderMailApp() {
+            const list = document.getElementById('mail-list');
+            const pane = document.getElementById('mail-detail-pane');
+            if (!list || !pane) return;
+
+            list.innerHTML = player.darknetMails.map(m => `
+                <div onclick="selectMail('${m.id}')" class="p-2.5 rounded-xl border ${m.id === activeMailId ? 'bg-pink-500/20 border-pink-500/40 text-white' : 'hover:bg-white/5 border-transparent text-gray-400'} cursor-pointer transition-all">
+                    <div class="font-bold text-[11px] truncate">${m.sender}</div>
+                    <div class="text-[10px] truncate text-gray-300">${m.subject}</div>
+                </div>
+            `).join('');
+
+            const mail = player.darknetMails.find(m => m.id === activeMailId) || player.darknetMails[0];
+            if (!mail) return;
+
+            const isReqMet = player.vncNodes[mail.reqNode] && player.vncNodes[mail.reqNode].drained;
+
+            pane.innerHTML = `
+                <div class="space-y-3">
+                    <div class="border-b border-white/10 pb-3">
+                        <div class="text-sm font-bold text-pink-400">${mail.subject}</div>
+                        <div class="text-[11px] text-gray-400">From: ${mail.sender}</div>
+                    </div>
+                    <p class="text-xs text-gray-300 leading-relaxed">${mail.body}</p>
+                </div>
+
+                <div class="p-4 bg-slate-900/60 border border-white/10 rounded-2xl flex justify-between items-center">
+                    <div>
+                        <div class="text-xs text-gray-400">Mission Reward Bounty</div>
+                        <div class="text-base font-bold text-emerald-400 font-mono">$${mail.reward.toLocaleString()}</div>
+                    </div>
+
+                    ${mail.claimed ? 
+                        `<span class="px-4 py-2 bg-gray-700 text-gray-400 rounded-xl text-xs font-bold">BOUNTY CLAIMED</span>` :
+                        `<button onclick="claimMailBounty('${mail.id}')" ${!isReqMet ? 'disabled' : ''} class="px-6 py-2.5 ${isReqMet ? 'bg-pink-600 hover:bg-pink-500 text-white' : 'bg-gray-800 text-gray-500 cursor-not-allowed'} rounded-xl text-xs font-bold transition-all">
+                            ${isReqMet ? 'CLAIM REWARD' : 'OBJECTIVE INCOMPLETE'}
+                        </button>`
+                    }
+                </div>
+            `;
+        }
+
+        function selectMail(id) { activeMailId = id; renderMailApp(); }
+
+        function claimMailBounty(id) {
+            const mail = player.darknetMails.find(m => m.id === id);
+            if (!mail || mail.claimed) return;
+
+            player.cash += mail.reward;
+            mail.claimed = true;
+            playSound('cash');
+            showToast(`BOUNTY CLAIMED: +$${mail.reward.toLocaleString()}!`, "success");
+            updateUI();
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 8. STOCK MARKET & CANVAS GRAPH                                    */
+        /* ------------------------------------------------------------------ */
+        let selectedStockSymbol = 'NVDA';
+        const stockPrices = {
+            NVDA: { current: 420, history: [400, 405, 412, 418, 420] },
+            CYBR: { current: 180, history: [160, 168, 172, 175, 180] },
+            APEX: { current: 890, history: [920, 910, 895, 888, 890] },
+            BTC:  { current: 64200, history: [61000, 62500, 63100, 63800, 64200] }
+        };
+
+        function selectStock(symbol) {
+            playSound('click');
+            selectedStockSymbol = symbol;
+            document.getElementById('chart-selected-symbol').innerText = symbol;
+            drawStockChart();
+        }
+
+        function drawStockChart() {
+            const canvas = document.getElementById('stock-chart');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            const history = stockPrices[selectedStockSymbol].history;
+            const min = Math.min(...history) * 0.95;
+            const max = Math.max(...history) * 1.05;
+
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.05)';
+            for (let i = 0; i < canvas.height; i += 30) {
+                ctx.beginPath(); ctx.moveTo(0, i); ctx.lineTo(canvas.width, i); ctx.stroke();
+            }
+
+            ctx.strokeStyle = '#f59e0b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            const step = canvas.width / (history.length - 1);
+            history.forEach((val, idx) => {
+                const x = idx * step;
+                const y = canvas.height - ((val - min) / (max - min)) * canvas.height;
+                if (idx === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+        }
+
+        function buyStock() {
+            const qty = Math.floor(Number(document.getElementById('trade-amount-input').value) || 0);
+            const price = stockPrices[selectedStockSymbol].current;
+            const cost = qty * price;
+
+            if (qty <= 0 || player.cash < cost) return showToast("Invalid amount or insufficient funds!", "error");
+
+            player.cash -= cost;
+            player.portfolio[selectedStockSymbol] = (player.portfolio[selectedStockSymbol] || 0) + qty;
+            playSound('cash');
+            showToast(`Bought ${qty} shares of $${selectedStockSymbol}`, "success");
+            document.getElementById('trade-owned-shares').innerText = player.portfolio[selectedStockSymbol];
+            updateUI();
+        }
+
+        function sellStock() {
+            const qty = player.portfolio[selectedStockSymbol] || 0;
+            if (qty <= 0) return showToast("No shares to sell!", "error");
+
+            const price = stockPrices[selectedStockSymbol].current;
+            const ret = qty * price;
+
+            player.cash += ret;
+            player.portfolio[selectedStockSymbol] = 0;
+            playSound('cash');
+            showToast(`Sold shares for $${ret.toLocaleString()}`, "success");
+            document.getElementById('trade-owned-shares').innerText = 0;
+            updateUI();
+        }
+
+        function pumpStock() {
+            const stock = stockPrices[selectedStockSymbol];
+            stock.current = Math.floor(stock.current * 1.6);
+            stock.history.push(stock.current);
+            player.trace += 10;
+            playSound('hack_success');
+            showToast(`PUMP EXPLOIT: $${selectedStockSymbol} skyrocketed +60%!`, "warning");
+            document.getElementById(`price-${selectedStockSymbol}`).innerText = `$${stock.current.toLocaleString()}`;
+            drawStockChart();
+            updateUI();
+        }
+
+        function dumpStock() {
+            const stock = stockPrices[selectedStockSymbol];
+            stock.current = Math.floor(stock.current * 0.5);
+            stock.history.push(stock.current);
+            player.trace += 10;
+            playSound('hack_success');
+            showToast(`DUMP EXPLOIT: $${selectedStockSymbol} crashed -50%!`, "warning");
+            document.getElementById(`price-${selectedStockSymbol}`).innerText = `$${stock.current.toLocaleString()}`;
+            drawStockChart();
+            updateUI();
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 9. CYBER CASINO ENGINE (WITH HOUSE FEE BALANCING)                  */
+        /* ------------------------------------------------------------------ */
+        let crashMultiplier = 1.00;
+        let crashTimer = null;
+        let crashActive = false;
+
+        function switchCasinoTab(tab) {
+            playSound('click');
+            document.getElementById('casino-tab-crash-view').classList.toggle('hidden', tab !== 'crash');
+            document.getElementById('casino-tab-slots-view').classList.toggle('hidden', tab !== 'slots');
+        }
+
+        function handleCrashAction() {
+            const btn = document.getElementById('crash-action-btn');
+            const HOUSE_FEE = 2; // $2 Syndicate House Fee
+
+            if (!crashActive) {
+                const bet = Math.floor(Number(document.getElementById('crash-bet-input').value) || 0);
+                if (bet <= 0 || bet > 100000) return showToast("Bet must be between $1 and $100,000!", "error");
+                if (player.cash < bet + HOUSE_FEE) return showToast(`Need $${bet + HOUSE_FEE} ($${bet} + $2 House Fee)!`, "error");
+
+                player.cash -= (bet + HOUSE_FEE);
+                updateUI();
+
+                crashActive = true;
+                crashMultiplier = 1.00;
+                btn.innerText = "CASHOUT NOW";
+                btn.className = "flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all";
+
+                const crashPoint = 1.00 + Math.random() * 8.00;
+
+                crashTimer = setInterval(() => {
+                    crashMultiplier += 0.05;
+                    document.getElementById('crash-multiplier-text').innerText = `${crashMultiplier.toFixed(2)}x`;
+                    document.getElementById('crash-payout-text').innerText = `Potential Payout: $${Math.floor(bet * crashMultiplier).toLocaleString()}`;
+
+                    if (crashMultiplier >= crashPoint) {
+                        clearInterval(crashTimer);
+                        crashActive = false;
+                        playSound('alarm');
+                        document.getElementById('crash-multiplier-text').innerText = "CRASHED!";
+                        btn.innerText = "START CRASH RUN";
+                        btn.className = "flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all";
+                    }
+                }, 100);
+
+            } else {
+                clearInterval(crashTimer);
+                crashActive = false;
+                const bet = Math.floor(Number(document.getElementById('crash-bet-input').value) || 0);
+                const payout = Math.floor(bet * crashMultiplier);
+
+                player.cash += payout;
+                playSound('cash');
+                showToast(`CASHOUT SUCCESS: Won $${payout.toLocaleString()}!`, "success");
+                btn.innerText = "START CRASH RUN";
+                btn.className = "flex-1 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold text-sm tracking-wide shadow-lg transition-all";
+                updateUI();
+            }
+        }
+
+        let isSlotSpinning = false;
+        function spinSlots() {
+            if (isSlotSpinning) return;
+            const HOUSE_FEE = 2;
+            const bet = Math.floor(Number(document.getElementById('slots-bet-input').value) || 0);
+            if (bet <= 0 || bet > 100000) return showToast("Bet must be between $1 and $100,000!", "error");
+            if (player.cash < bet + HOUSE_FEE) return showToast(`Need $${bet + HOUSE_FEE} ($${bet} + $2 House Fee)!`, "error");
+
+            player.cash -= (bet + HOUSE_FEE);
+            updateUI();
+            isSlotSpinning = true;
+
+            const icons = ['💀', '💎', '🎰', '⚡', '7️⃣'];
+            let ticks = 0;
+
+            const spinInterval = setInterval(() => {
+                ticks++;
+                playSound('spin');
+                document.getElementById('slot-reel-1').innerText = icons[Math.floor(Math.random() * icons.length)];
+                document.getElementById('slot-reel-2').innerText = icons[Math.floor(Math.random() * icons.length)];
+                document.getElementById('slot-reel-3').innerText = icons[Math.floor(Math.random() * icons.length)];
+
+                if (ticks > 15) {
+                    clearInterval(spinInterval);
+                    isSlotSpinning = false;
+
+                    const r1 = icons[Math.floor(Math.random() * icons.length)];
+                    const r2 = icons[Math.floor(Math.random() * icons.length)];
+                    const r3 = icons[Math.floor(Math.random() * icons.length)];
+
+                    document.getElementById('slot-reel-1').innerText = r1;
+                    document.getElementById('slot-reel-2').innerText = r2;
+                    document.getElementById('slot-reel-3').innerText = r3;
+
+                    if (r1 === r2 && r2 === r3) {
+                        const win = bet * 10;
+                        player.cash += win;
+                        playSound('cash');
+                        showToast(`JACKPOT! Match 3 reels! Won $${win.toLocaleString()}`, "success");
+                    } else if (r1 === r2 || r2 === r3 || r1 === r3) {
+                        const win = bet * 3;
+                        player.cash += win;
+                        playSound('cash');
+                        showToast(`MATCH 2! Won $${win.toLocaleString()}`, "info");
+                    }
+                    updateUI();
+                }
+            }, 80);
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 10. NETGUARD SECURITY & BLACK MARKET                              */
+        /* ------------------------------------------------------------------ */
+        function flushTrace() {
+            if (player.cash < 500) return showToast("Need $500 to flush trace logs!", "error");
+            player.cash -= 500;
+            player.trace = Math.max(0, player.trace - 30);
+            playSound('cash');
+            showToast("Trace logs purged (-30%)", "success");
+            updateUI();
+        }
+
+        function buyMarketItem(itemKey, cost) {
+            if (player.cash < cost) return showToast("Insufficient funds!", "error");
+
+            player.cash -= cost;
+            playSound('cash');
+
+            if (itemKey === 'cli_2') player.cliLevel = Math.max(player.cliLevel, 2);
+            if (itemKey === 'cli_3') player.cliLevel = Math.max(player.cliLevel, 3);
+            if (itemKey === 'cli_4') player.cliLevel = Math.max(player.cliLevel, 4);
+            if (itemKey === 'antenna') player.hasAntenna = true;
+
+            showToast("Item purchased successfully!", "success");
+            updateUI();
+        }
+
+        function renderFilesGrid() {
+            const grid = document.getElementById('file-grid');
+            if (!grid) return;
+            grid.innerHTML = player.exfiltratedFiles.map(f => `
+                <div class="p-3 bg-slate-900 border border-white/10 rounded-xl flex flex-col items-center justify-center text-center group hover:border-cyan-400 cursor-pointer transition-all">
+                    <i class="fa-solid fa-file-lines text-3xl text-cyan-400 mb-2 group-hover:scale-110 transition-transform"></i>
+                    <span class="text-[11px] font-mono text-white truncate w-full">${f.name}</span>
+                </div>
+            `).join('');
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 11. PERSONALIZATION & LOCAL FILE WALLPAPER UPLOAD                 */
+        /* ------------------------------------------------------------------ */
+        function switchSettingsTab(tab) {
+            playSound('click');
+            document.getElementById('set-view-personalize').classList.toggle('hidden', tab !== 'personalize');
+            document.getElementById('set-view-audio').classList.toggle('hidden', tab !== 'audio');
+            document.getElementById('set-view-system').classList.toggle('hidden', tab !== 'system');
+        }
+
+        function applyWallpaperImage(src) {
+            document.getElementById('desktop-container').style.backgroundImage = `url('${src}')`;
+            document.getElementById('lock-screen').style.backgroundImage = `url('${src}')`;
+            document.getElementById('login-screen').style.backgroundImage = `url('${src}')`;
+            playSound('click');
+            showToast("Wallpaper updated successfully", "success");
+        }
+
+        function setWallpaper(type) {
+            const urls = {
+                castle: 'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?q=80&w=2000&auto=format&fit=crop',
+                cyberpunk: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?q=80&w=2000&auto=format&fit=crop',
+                bloom: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000&auto=format&fit=crop',
+                ocean: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=2000&auto=format&fit=crop',
+                aurora: 'https://images.unsplash.com/photo-1531366936337-7c912a4589a7?q=80&w=2000&auto=format&fit=crop'
+            };
+            applyWallpaperImage(urls[type] || urls.castle);
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                applyWallpaperImage(e.target.result);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function handleURLUpload() {
+            const url = document.getElementById('wallpaper-url-input').value.trim();
+            if (!url) return showToast("Please enter a valid image URL!", "error");
+            applyWallpaperImage(url);
+        }
+
+        function setAccentColor(hex, name) {
+            document.documentElement.style.setProperty('--accent-color', hex);
+            document.documentElement.style.setProperty('--accent-glow', `${hex}66`);
+            playSound('click');
+            showToast(`Accent set to ${name}`, "info");
+        }
+
+        function resetGameData() {
+            if (confirm("Are you sure you want to reset all progress?")) {
+                localStorage.removeItem('terminal_war_v5_save');
+                player = JSON.parse(JSON.stringify(DEFAULT_STATE));
+                updateUI();
+                showToast("System Reset Complete", "info");
+            }
+        }
+
+        /* ------------------------------------------------------------------ */
+        /* 12. SYSTEM FLYOUT TOGGLES & TOAST SYSTEM                          */
+        /* ------------------------------------------------------------------ */
+        function lockScreen() {
+            document.getElementById('login-screen').classList.remove('hidden');
+            document.getElementById('start-menu').classList.add('hidden');
+        }
+
+        function toggleStartMenu() {
+            document.getElementById('start-menu').classList.toggle('hidden');
+        }
+
+        function toggleQuickSettings() {
+            document.getElementById('quick-settings-flyout').classList.toggle('hidden');
+            document.getElementById('calendar-flyout').classList.add('hidden');
+        }
+
+        function toggleCalendar() {
+            document.getElementById('calendar-flyout').classList.toggle('hidden');
+            document.getElementById('quick-settings-flyout').classList.add('hidden');
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColors = {
+                info: 'bg-slate-900/90 border-cyan-400 text-cyan-200',
+                success: 'bg-slate-900/90 border-emerald-400 text-emerald-200',
+                warning: 'bg-slate-900/90 border-amber-400 text-amber-200',
+                error: 'bg-slate-900/90 border-red-500 text-red-200'
+            };
+
+            toast.className = `p-3 rounded-2xl border ${bgColors[type]} shadow-2xl backdrop-blur-xl font-sans text-xs flex items-center justify-between pointer-events-auto animate-bounce`;
+            toast.innerHTML = `
+                <span>${message}</span>
+                <i class="fa-solid fa-xmark ml-2 cursor-pointer opacity-60 hover:opacity-100" onclick="this.parentElement.remove()"></i>
+            `;
+
+            container.appendChild(toast);
+            setTimeout(() => { toast.remove(); }, 4000);
+        }
+
+        // Lock Screen Click Event
+        document.getElementById('lock-screen').addEventListener('click', () => {
+            document.getElementById('lock-screen').classList.add('hidden');
+            document.getElementById('login-screen').classList.remove('hidden');
+        });
+
+        // Live Clocks
+        function updateClocks() {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            const dateStr = now.toLocaleDateString([], { month: '2-digit', day: '2-digit', year: 'numeric' });
+
+            document.getElementById('lock-clock').innerText = timeStr;
+            document.getElementById('tb-clock').innerText = timeStr;
+            document.getElementById('tb-date').innerText = dateStr;
+        }
+        setInterval(updateClocks, 1000);
+
+        /* ------------------------------------------------------------------ */
+        /* 13. MATRIX CANVAS AMBIENCE                                        */
+        /* ------------------------------------------------------------------ */
+        const matrixCanvas = document.getElementById('matrix-canvas');
+        if (matrixCanvas) {
+            const mctx = matrixCanvas.getContext('2d');
+            matrixCanvas.width = window.innerWidth;
+            matrixCanvas.height = window.innerHeight;
+            const drops = Array(Math.floor(matrixCanvas.width / 20)).fill(1);
+
+            function drawMatrix() {
+                mctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+                mctx.fillRect(0, 0, matrixCanvas.width, matrixCanvas.height);
+                mctx.fillStyle = '#00f3ff';
+                mctx.font = '15px monospace';
+
+                drops.forEach((y, x) => {
+                    const text = String.fromCharCode(Math.floor(Math.random() * 128));
+                    mctx.fillText(text, x * 20, y * 20);
+                    if (y * 20 > matrixCanvas.height && Math.random() > 0.975) drops[x] = 0;
+                    drops[x]++;
+                });
+            }
+            setInterval(drawMatrix, 50);
+        }
+
+        window.onload = function() {
+            loadSavedState();
+            updateClocks();
+            selectStock('NVDA');
+        };
+    </script>
+</body>
+</html>
